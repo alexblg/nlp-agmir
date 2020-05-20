@@ -1,5 +1,8 @@
 import json
+import os
 from torch.utils.data import Dataset
+import unicodedata
+import re
 
 def clean_merge_tags(tags):
     return ' '.join(
@@ -38,3 +41,75 @@ class IUXRay(Dataset):
         with open(caption_json,'r') as handle:
             cases = json.load(handle)
         return cases
+    
+# Turn a Unicode string to plain ASCII, thanks to
+# https://stackoverflow.com/a/518232/2809427
+def unicodeToAscii(s):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', s)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+# Lowercase, trim, and remove non-letter characters
+def normalizeString(s):
+    s = unicodeToAscii(s.lower().strip())
+    s = re.sub(r"([.!?])", r" \1", s)
+    s = re.sub(r"[^a-zA-Z.!?]+", r" ", s)
+    return s
+
+SOS_token = 0
+EOS_token = 1
+
+class Lang:
+    def __init__(self, name):
+        self.name = name
+        self.word2index = {}
+        self.word2count = {}
+        self.index2word = {0: "SOS", 1: "EOS"}
+        self.n_words = 2  # Count SOS and EOS
+
+    def addSentence(self, sentence):
+        for word in sentence.split(' '):
+            self.addWord(word)
+
+    def addWord(self, word):
+        if word not in self.word2index:
+            self.word2index[word] = self.n_words
+            self.word2count[word] = 1
+            self.index2word[self.n_words] = word
+            self.n_words += 1
+        else:
+            self.word2count[word] += 1
+
+def getReports():
+    print("read data...")
+
+    # load dataset
+    data_path = r"/home/alex/data/nlp/agmir"
+    from loaders import IUXRay
+    ds = IUXRay(os.path.join(data_path,'cases_clean2.json'))
+
+    # make Lang instances
+    input_lang = Lang('tags')
+    output_lang = Lang('report')
+
+    return input_lang, output_lang, ds
+
+def prepareReportData():
+    input_lang, output_lang, ds = getReports()
+    
+    print("read %s reports" % len(ds))
+    
+    #pairs = filterPairs(pairs)
+    print("trimmed to %s sentence pairs" % len(ds))
+    
+    print("counting words...")
+    for i, report in enumerate(ds):
+        #print(i, report)
+        input_lang.addSentence(report[0])
+        output_lang.addSentence(
+            normalizeString(report[1])) # FIX LATER: store normalized reports instead
+    print("counted words:")
+    print('\t',input_lang.name, input_lang.n_words)
+    print('\t',output_lang.name, output_lang.n_words)
+    return input_lang, output_lang, ds
