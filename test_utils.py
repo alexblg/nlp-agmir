@@ -1,4 +1,5 @@
 import torch
+import random
 
 from loaders import normalizeString, tensorFromSentence, EOS_token, SOS_token
 

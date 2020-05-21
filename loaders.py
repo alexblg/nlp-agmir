@@ -83,7 +83,7 @@ class Lang:
             self.word2count[word] += 1
 
 def getReports():
-    print("read data...")
+    print("\nreading data..")
 
     # load dataset
     data_path = r"/home/alex/data/nlp/agmir"
@@ -102,9 +102,9 @@ def prepareReportData():
     print("read %s reports" % len(ds))
     
     #pairs = filterPairs(pairs)
-    print("trimmed to %s sentence pairs" % len(ds))
+    #print("trimmed to %s sentence pairs" % len(ds))
     
-    print("counting words...")
+    print("counting words..")
     for i, report in enumerate(ds):
         #print(i, report)
         input_lang.addSentence(report[0])
