@@ -3,6 +3,7 @@ import os
 from torch.utils.data import Dataset
 import unicodedata
 import re
+import torch
 
 def clean_merge_tags(tags):
     return ' '.join(
@@ -113,3 +114,16 @@ def prepareReportData():
     print('\t',input_lang.name, input_lang.n_words)
     print('\t',output_lang.name, output_lang.n_words)
     return input_lang, output_lang, ds
+
+def indexesFromSentence(lang, sentence):
+    return [lang.word2index[word] for word in sentence.split(' ')]
+
+def tensorFromSentence(lang, sentence, device, max_length):
+    indexes = indexesFromSentence(lang, sentence)
+    indexes.append(EOS_token)
+    return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)[:max_length]
+
+def tensorsFromPair(pair, input_lang, output_lang, device, max_length):
+    input_tensor = tensorFromSentence(input_lang, pair[0], device, max_length)
+    target_tensor = tensorFromSentence(output_lang, pair[1], device, max_length)
+    return (input_tensor, target_tensor)
