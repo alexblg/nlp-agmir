@@ -1,6 +1,6 @@
 import torch
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 
 # load data
 from loaders import prepareReportData
@@ -19,7 +19,7 @@ attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, max_length, dro
 from train_utils import trainIters
 
 print("\ntraining on {}..".format(device))
-n_iter = 150000
+n_iter = 500000
 print_every = 10000
 plot_losses = trainIters(ds, encoder1, attn_decoder1, n_iter, max_length, input_lang, output_lang, print_every=print_every)
 
