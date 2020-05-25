@@ -26,3 +26,12 @@ def print_nl_pred_vs_tgt(pred, tgt, index2word):
         
 def format_list_for_bleu(candidate_corpus, references_corpus):
     return [[str(i) for i in sent] for sent in candidate_corpus], [[sent] for sent in [[str(i) for i in sent] for sent in references_corpus]]
+
+from tsf_infer_utils import infer
+from torchtext.data.metrics import bleu_score
+from tsf_utils import format_list_for_bleu
+
+def get_bleu_from_loader(model, loader):
+    pred_list, tgt_list = infer(model, loader)
+    pred_list_bleu, tgt_list_bleu = format_list_for_bleu(pred_list, tgt_list)
+    return bleu_score(pred_list_bleu, tgt_list_bleu)
