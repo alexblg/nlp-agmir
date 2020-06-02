@@ -39,11 +39,11 @@ from torchtext.data.metrics import bleu_score
 from tsf_utils import format_list_for_bleu
 
 def get_bleu_from_loader2(model, loader):
-    pred_list, tgt_list = tsf_infer_utils.infer2(model, loader)
+    pred_list, tgt_list, _ = tsf_infer_utils.infer2(model, loader)
     pred_list_bleu, tgt_list_bleu = format_list_for_bleu(pred_list, tgt_list)
     return bleu_score(pred_list_bleu, tgt_list_bleu)
 
 def get_bleu_from_loader(model, loader):
-    pred_list, tgt_list = tsf_infer_utils.infer(model, loader)
+    pred_list, tgt_list, _ = tsf_infer_utils.infer(model, loader)
     pred_list_bleu, tgt_list_bleu = format_list_for_bleu(pred_list, tgt_list)
     return bleu_score(pred_list_bleu, tgt_list_bleu)
