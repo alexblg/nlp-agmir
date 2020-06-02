@@ -4,9 +4,16 @@ def get_sent_from_tk(tensor_tk, index2word):
 def get_tk_from_proba(model_output):
     return model_output.max(dim=2)[1]
     
-def print_nl_pred_vs_tgt(pred, tgt, index2word):
+def print_nl_pred_vs_tgt(pred, tgt, index2word, tags=None, tags_index2word=None):
     for row in range(len(pred)):
-                
+        
+        # print target
+        if tags:
+            nl_tags = get_sent_from_tk(
+                tags[row]
+                ,tags_index2word)
+            print('TAGS: ',' '.join(nl_tags))
+        
         # print target
         nl_tgt = get_sent_from_tk(
             tgt[row]

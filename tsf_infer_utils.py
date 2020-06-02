@@ -2,8 +2,7 @@ from tsf_train_utils import prep_transf_inputs, prep_transf_inputs2
 from tsf_utils import get_tk_from_proba
 
 def infer2(model, loader):
-    pred_list = []
-    tgt_list = []
+    pred_list, tgt_list = [], []
     device = model.embed_tgt.weight.device
     
     for (src, src_key_padding_mask, tgt, tgt_key_padding_mask) in iter(loader):
@@ -24,8 +23,7 @@ def infer2(model, loader):
     return pred_list, tgt_list
 
 def infer(model, loader):
-    pred_list = []
-    tgt_list = []
+    pred_list, tgt_list = [], []
     device = model.embed_tgt.weight.device
     
     for (src, src_key_padding_mask, tgt, tgt_key_padding_mask) in iter(loader):
