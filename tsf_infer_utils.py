@@ -43,7 +43,6 @@ def oos_infer(model, loader, max_seq_length):
     pred_list, tgt_list, tag_list = [], [], []
     device = model.embed_tgt.weight.device
 
-
     # run through batches
     for (src, src_key_padding_mask, tgt, tgt_key_padding_mask) in iter(loader):
 
