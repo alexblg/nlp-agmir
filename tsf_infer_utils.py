@@ -10,6 +10,65 @@ from transformer_translation.dataset import IDX_EOS, IDX_SOS
 import torch.nn as nn
 from einops import rearrange
 
+def get_EOS_indices(pred):
+    # get indices of instances of IDX_EOS in each row
+    idxr, idxc = torch.where(pred == IDX_EOS)
+    
+    if not any(idxr):
+        return [-2 for i in range(pred.shape[0])]
+
+    # greedy search of first appearance
+    row_many_idx, row_unique_idx = 0, 0
+    idx_eos = []
+    while row_unique_idx < pred.shape[0] and row_many_idx < idxr.shape[0]:
+        if idxr[row_many_idx].item() > row_unique_idx:
+            idx_eos.append(-2)
+            row_unique_idx += 1
+        if idxr[row_many_idx].item() == row_unique_idx:
+            idx_eos.append(idxc[row_many_idx].item())
+            row_unique_idx += 1
+        else:
+            row_many_idx += 1
+        if row_many_idx == idxr.shape[0]:
+            idx_eos.append(-2)
+            break
+        
+    return idx_eos
+
+def oos_infer_batched(model, loader, max_seq_length):
+    device = model.embed_tgt.weight.device
+    pred_list_lg, tgt_list_lg, tag_list_lg = [], [], []
+
+    for (src, src_key_padding_mask, tgt, tgt_key_padding_mask) in iter(loader):
+
+        src = src.to(device)
+
+        pred = IDX_SOS * torch.ones((tgt.shape[1], 1), dtype=torch.long, device=device)
+        pred_mask = gen_nopeek_mask(pred.shape[1]).to(device)
+
+        while  not (pred == IDX_EOS).any(1).all() and pred.shape[1] < max_seq_length + 1:
+            output = model(src, pred, src_key_padding_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None, tgt_mask=pred_mask)#[[-1],:])
+            pred = torch.cat([pred, get_tk_from_proba(output)[:,[-1]]], dim=1)
+            pred_mask = gen_nopeek_mask(pred.shape[1]).to(device)
+
+        # format pred sentence output
+        idx_eos = get_EOS_indices(pred)
+        pred_list = [to_list_npint64(pred[i,:idx_eos[i]].tolist()+[IDX_EOS]) for i in range(pred.shape[0])]
+
+        # format tgt sentence output
+        tgt_list = [to_list_npint64(pop_padding_ts(tgt[:,[i],:]).flatten().tolist()) for i in range(tgt.shape[1])]
+
+        # format tags
+        tag_idx = src.nonzero()
+        tag_list = [tag_idx[tag_idx[:,1] == i, 2] for i in range(src.shape[1])]
+
+        # aggregate results
+        pred_list_lg += pred_list
+        tgt_list_lg += tgt_list
+        tag_list_lg += tag_list
+    
+    return pred_list_lg, tgt_list_lg, tag_list_lg
+
 def forward_model(model, src, pred_sentence, device):
     tgt = torch.tensor(pred_sentence).unsqueeze(0).unsqueeze(0).to(device)
 
