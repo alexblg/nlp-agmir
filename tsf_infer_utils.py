@@ -10,7 +10,7 @@ from transformer_translation.dataset import IDX_EOS, IDX_SOS
 import torch.nn as nn
 from einops import rearrange
 
-def get_EOS_indices(pred):
+def get_EOS_indices_old(pred):
     # get indices of instances of IDX_EOS in each row
     idxr, idxc = torch.where(pred == IDX_EOS)
     
@@ -33,6 +33,17 @@ def get_EOS_indices(pred):
             idx_eos.append(-2)
             break
         
+    return idx_eos
+
+def get_EOS_indices(pred):
+    idx_eos = []
+    for i in range(pred.shape[0]):
+        idx = torch.where(pred[i,:] == IDX_EOS)[0]
+        if idx.shape[0] == 0:
+            idx = -2
+        else:
+            idx = idx.min().item()
+        idx_eos.append(idx)
     return idx_eos
 
 def oos_infer_batched(model, loader, max_seq_length):
