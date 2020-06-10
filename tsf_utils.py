@@ -47,3 +47,14 @@ def get_bleu_from_loader(model, loader):
     pred_list, tgt_list, _ = tsf_infer_utils.infer(model, loader)
     pred_list_bleu, tgt_list_bleu = format_list_for_bleu(pred_list, tgt_list)
     return bleu_score(pred_list_bleu, tgt_list_bleu)
+
+import datetime
+import torch
+
+def save_model(model, model_name, date_format='%Y%m%d_%H%M'):
+    filename = 'models/{}_model_{}.pth'.format(
+        datetime.datetime.now().strftime(date_format)
+        ,model_name
+    )
+    torch.save(model.state_dict(), filename)
+    print('model saved at '+filename)
