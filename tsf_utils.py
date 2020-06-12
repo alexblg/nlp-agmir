@@ -1,5 +1,8 @@
 def get_sent_from_tk(tensor_tk, index2word):
     return [index2word[idx.item()] for idx in tensor_tk]
+
+def get_sent_from_tk2(tensor_tk, index2word):
+    return [index2word[idx] for idx in tensor_tk]
     
 def get_tk_from_proba(model_output):
     return model_output.max(dim=2)[1]
@@ -9,20 +12,20 @@ def print_nl_pred_vs_tgt(pred, tgt, index2word, tags=None, tags_index2word=None)
         
         # print target
         if tags:
-            nl_tags = get_sent_from_tk(
+            nl_tags = get_sent_from_tk2(
                 tags[row]
                 ,tags_index2word)
             print('TAGS: ',' '.join(nl_tags))
         
         # print target
-        nl_tgt = get_sent_from_tk(
+        nl_tgt = get_sent_from_tk2(
             tgt[row]
             ,index2word)
         print('TARGET: ',' '.join(nl_tgt))
                 
         # print predictions
         try:
-            nl_pred = get_sent_from_tk(
+            nl_pred = get_sent_from_tk2(
                 pred[row]
                 ,index2word)
             print('PREDICTION: ',' '.join(nl_pred))

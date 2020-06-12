@@ -46,6 +46,39 @@ def get_EOS_indices(pred):
         idx_eos.append(idx)
     return idx_eos
 
+def oos_infer_batched2(model, loader, max_seq_length):
+    device = model.embed_tgt.weight.device
+    pred_list_lg, tgt_list_lg, tag_list_lg = [], [], []
+
+    for (src, src_key_padding_mask, tgt, tgt_key_padding_mask) in iter(loader):
+
+        # format tags
+        tag_list = [to_list_npint64(pop_padding_ts(src[:,[i],:]).flatten().tolist()) for i in range(src.shape[1])]
+
+        src = src[0].to(device)
+
+        pred = IDX_SOS * torch.ones((tgt.shape[1], 1), dtype=torch.long, device=device)
+        pred_mask = gen_nopeek_mask(pred.shape[1]).to(device)
+
+        while  not (pred == IDX_EOS).any(1).all() and pred.shape[1] < max_seq_length + 1:
+            output = model(src, pred, src_key_padding_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None, tgt_mask=pred_mask)#[[-1],:])
+            pred = torch.cat([pred, get_tk_from_proba(output)[:,[-1]]], dim=1)
+            pred_mask = gen_nopeek_mask(pred.shape[1]).to(device)
+
+        # format pred sentence output
+        idx_eos = get_EOS_indices(pred)
+        pred_list = [to_list_npint64(pred[i,:idx_eos[i]].tolist()+[IDX_EOS]) for i in range(pred.shape[0])]
+
+        # format tgt sentence output
+        tgt_list = [to_list_npint64(pop_padding_ts(tgt[:,[i],:]).flatten().tolist()) for i in range(tgt.shape[1])]
+
+        # aggregate results
+        pred_list_lg += pred_list
+        tgt_list_lg += tgt_list
+        tag_list_lg += tag_list
+    
+    return pred_list_lg, tgt_list_lg, tag_list_lg
+
 def oos_infer_batched(model, loader, max_seq_length):
     device = model.embed_tgt.weight.device
     pred_list_lg, tgt_list_lg, tag_list_lg = [], [], []
